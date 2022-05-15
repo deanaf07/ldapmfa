@@ -1,0 +1,10 @@
+head -10 /dev/urandom | md5sum | cut -b 1-30 | xargs oathtool –verbose –totp | grep Base32 | cut -b 16-
+head -10 /dev/urandom | md5sum | cut -b 1-30 | xargs oathtool –verbose –htotp | grep base32 | cut -b 16-
+
+oathtool 196e294216d483d0d42abdb58228ab –verbose –htotp | grep base32 | cut -b 16-
+
+head -10 /dev/urandom | md5sum | cut -b 1-30 | xargs oathtool -v
+
+TWXNEQEBOKG26HJBHCR4K7YU
+
+

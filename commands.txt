@@ -1,0 +1,136 @@
+
+###5-2###
+Install Stand-alone LDAP Daemon (SLAPD)
+apt install slapd ldap-utils -y
+pass
+dpkg-reconfigure slapd
+no
+dean.com
+organization
+yes
+yes
+checking
+service slapd restart
+ldapsearch -x -LLL -b "" -s base namingContexts
+Create OpenLDAP User Accounts
+cd /etc/ldap
+nano users-ou.ldif
+pasting "
+dn: ou=people,dc=dean,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: people
+
+dn: ou=groups,dc=dean,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+"
+adjust the SLAPD database access controls;
+nano update-mdb-acl.ldif
+pasting "
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: to attrs=userPassword,shadowLastChange,shadowExpire
+  by self write
+  by anonymous auth
+  by dn.subtree="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage
+  by dn.exact="cn=readonly,ou=people,dc=dean,dc=com" read
+  by * none
+olcAccess: to dn.exact="cn=readonly,ou=people,dc=dean,dc=com" by dn.subtree="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" ma>
+olcAccess: to dn.subtree="dc=dean,dc=com" by dn.subtree="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage
+  by users read
+  by * none
+
+
+"
+Update database ACL with the above information by running the command below;
+ldapadd -Y EXTERNAL -H ldapi:/// -f update-mdb-acl.ldif
+create the users OU
+ldapadd -Y EXTERNAL -H ldapi:/// -f users-ou.ldif
+add user accounts
+nano johndoe.ldif
+"
+dn: uid=johndoe,ou=people,dc=dean,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: johndoe
+cn: John
+sn: Doe
+loginShell: /bin/bash
+uidNumber: 10000
+gidNumber: 10000
+homeDirectory: /home/johndoe
+shadowMax: 60
+shadowMin: 1
+shadowWarning: 7
+shadowInactive: 7
+shadowLastChange: 0
+
+dn: cn=johndoe,ou=groups,dc=dean,dc=com
+objectClass: posixGroup
+cn: johndoe
+gidNumber: 10000
+memberUid: johndoe
+"
+add the user johndoe to the database
+ldapadd -Y EXTERNAL -H ldapi:/// -f johndoe.ldif
+Setting Password for LDAP User
+pass
+pass
+verifying
+ldapwhoami -x -D "uid=johndoe,ou=people,dc=dean,dc=com" -w pass
+Create OpenLDAP BIND DN
+slappasswd
+pass
+pass
+{SSHA}4I7Y25AcjDtHho+QAXC2216oqVHX1At7
+Copy the hash above and replace it with the value of userPassword below;
+"
+dn: cn=readonly,ou=people,dc=dean,dc=com
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+cn: readonly
+userPassword: {SSHA}4I7Y25AcjDtHho+QAXC2216oqVHX1At7
+description: Bind DN user for LDAP Operations
+"
+Add the bind user to the LDAP database;
+ldapadd -Y EXTERNAL -H ldapi:/// -f readonly-user.ldif
+
+Define the access controls for the user bind DN. See what we have in our ACL file above. Or simply run the command below to check the ACLs defined;
+ldapsearch -Q -LLL -Y EXTERNAL -H ldapi:/// -b cn=config '(olcDatabase={1}mdb)' olcAccess
+
+Allow OpenLDAP Service on Firewall
+ufw allow "OpenLDAP LDAP"
+ufw allow "OpenLDAP LDAPS"
+####
+####
+service apache2 restart
+##
+service slapd restart
+##
+cd /etc/apache2
+cp apache2.conf apache2.conf.backup5
+nano apache2.conf
+
+apt install git -y
+apt-get -y install python3-pip
+pip3 install onetimepass
+a2enmod rewrite
+chmod 777 /usr/share
+cd /usr/share
+git clone https://github.com/itemir/apache_2fa
+
+mkdir state
+Enable mod_rewrite, mod_auth_digest and mod_cgid
+a2enmod rewrite
+a2enmod auth_digest
+a2enmod cgid
+chmod 777 *
+service apache2 restart
+johndoe
+pass
+
+#########

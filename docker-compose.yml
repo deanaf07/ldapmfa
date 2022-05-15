@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  ubuntu:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: ubuntu5
+    ports:
+      - "8082:80"
+    privileged: true
+#    volumes:
